@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "python-boilerplate"
+version = "0.1.0"
+description = "Python boilerplate with autoformatting, linting"
+authors = ["murnat98 <murnat98@yandex.ru>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+isort = "^5.10.1"
+flake8 = "^4.0.1"
+black = "^22.3.0"
+pre-commit = "^2.19.0"
+poethepoet = "^0.13.1"
+commitizen = "^2.27.0"
+
+[tool.black]
+line-length = 120
+skip_string_normalization = true
+
+[tool.isort]
+profile = "black"
+
+[tool.poe.tasks]
+git-hooks = "pre-commit install -t pre-commit -t commit-msg -f"
+prevent-master = "bash scripts/prevent_master.sh"
+lint = "flake8"
+commit = "cz commit"
+test = "python -m unittest discover tests/"
+
+[tool.poe.tasks.format]
+shell = "isort **/*.py && black ."
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

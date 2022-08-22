@@ -1,0 +1,33 @@
+from typing import List
+
+from paho.mqtt import client
+
+from devices_hub.mqtt.errors import MQTTError
+from devices_hub.mqtt.topics import Topic
+
+
+class MQTT:
+    def __init__(self, host: str, port: int, topics: List[Topic]):
+        self.topics = {topic.topic: topic.subscriber for topic in topics}
+
+        self.paho_mqtt_client = client.Client()
+        self.paho_mqtt_client.on_message = self.on_message
+        self.paho_mqtt_client.on_connect = self.on_connect
+        self.paho_mqtt_client.connect(host, port)
+
+    def on_connect(self, mqtt_client, userdata, flags, rc):
+        if rc != 0:
+            self.paho_mqtt_client.reconnect()
+        else:
+            for topic in self.topics.values():
+                self.paho_mqtt_client.subscribe(topic)
+
+    def on_message(self, client_data, userdata, message):
+        try:
+            subscriber = self.topics[message.topic]
+        except KeyError:
+            raise MQTTError(f'{message.topic} not found in topics {self.topics}')
+        subscriber.subscribe(message.payload)
+
+    def loop(self):
+        self.paho_mqtt_client.loop_forever()

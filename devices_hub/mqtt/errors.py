@@ -1,0 +1,2 @@
+class MQTTError(Exception):
+    pass

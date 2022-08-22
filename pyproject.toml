@@ -7,6 +7,8 @@ authors = ["murnat98 <murnat98@yandex.ru>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 paho-mqtt = "^1.6.1"
+environs = "^9.5.0"
+schema = "^0.7.5"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"
@@ -29,6 +31,7 @@ prevent-master = "bash scripts/prevent_master.sh"
 lint = "flake8"
 commit = "cz commit"
 test = "python -m unittest discover tests/"
+run = "python devices_hub/main.py"
 
 [tool.poe.tasks.format]
 shell = "isort **/*.py && black ."

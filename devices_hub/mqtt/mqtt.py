@@ -2,7 +2,7 @@ from typing import List
 
 from paho.mqtt import client
 
-from devices_hub.mqtt.errors import MQTTError
+from devices_hub.mqtt.errors import MQTTError, ValidationError
 from devices_hub.mqtt.topics import Topic
 
 
@@ -19,7 +19,7 @@ class MQTT:
         if rc != 0:
             self.paho_mqtt_client.reconnect()
         else:
-            for topic in self.topics.values():
+            for topic in self.topics.keys():
                 self.paho_mqtt_client.subscribe(topic)
 
     def on_message(self, client_data, userdata, message):
@@ -27,7 +27,10 @@ class MQTT:
             subscriber = self.topics[message.topic]
         except KeyError:
             raise MQTTError(f'{message.topic} not found in topics {self.topics}')
-        subscriber.subscribe(message.payload)
+        try:
+            subscriber.subscribe(message.payload)
+        except ValidationError:
+            pass
 
     def loop(self):
         self.paho_mqtt_client.loop_forever()

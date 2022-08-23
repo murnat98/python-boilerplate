@@ -9,6 +9,7 @@ python = "^3.9"
 paho-mqtt = "^1.6.1"
 environs = "^9.5.0"
 schema = "^0.7.5"
+zeroconf = "^0.39.0"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"

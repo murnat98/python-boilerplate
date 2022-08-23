@@ -1,6 +1,9 @@
-class MQTTError(Exception):
-    pass
+from devices_hub.errors import LoggerError
 
 
-class ValidationError(MQTTError):
+class MQTTError(LoggerError):
+    logger = 'mqtt'
+
+
+class ValidationError(Exception):
     pass

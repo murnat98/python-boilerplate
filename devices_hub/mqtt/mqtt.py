@@ -2,8 +2,11 @@ from typing import List
 
 from paho.mqtt import client
 
+from devices_hub.logger import get_logger
 from devices_hub.mqtt.errors import MQTTError, ValidationError
 from devices_hub.mqtt.topics import Topic
+
+logger = get_logger(__name__)
 
 
 class MQTT:
@@ -15,7 +18,7 @@ class MQTT:
         self.paho_mqtt_client.on_connect = self.on_connect
         self.paho_mqtt_client.connect(host, port)
 
-    def on_connect(self, mqtt_client, userdata, flags, rc):
+    def on_connect(self, client_data, userdata, flags, rc):
         if rc != 0:
             self.paho_mqtt_client.reconnect()
         else:
@@ -30,7 +33,7 @@ class MQTT:
         try:
             subscriber.subscribe(message.payload)
         except ValidationError:
-            pass
+            logger.error(f'Message incorrect format: {message.payload}')
 
     def loop(self):
         self.paho_mqtt_client.loop_forever()

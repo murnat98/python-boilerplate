@@ -16,33 +16,45 @@ class MQTT:
 
     def __init__(self, host: str, port: int, topics: List[Topic]):
         self._restart_seconds = self._INITIAL_RESTART_SECONDS
+        self.host = host
+        self.port = port
+
         self.topics = {topic.topic: topic.subscriber for topic in topics}
 
         self.paho_mqtt_client = client.Client()
         self.paho_mqtt_client.on_message = self.on_message
         self.paho_mqtt_client.on_connect = self.on_connect
-        self.connect(host, port)
+        self.paho_mqtt_client.on_disconnect = self.on_disconnect
+        self.connect()
 
-    def connect(self, host: str, port: int):
+    def connect(self):
         try:
-            self.paho_mqtt_client.connect(host, port)
+            self.paho_mqtt_client.connect(self.host, self.port)
         except ConnectionRefusedError:
             logger.error(
-                f'Unable to connect to mosquitto broker at {host}:{port}. Trying in {self._restart_seconds} seconds...'
+                f'Unable to connect to mosquitto broker at {self.host}:{self.port}. '
+                f'Trying in {self._restart_seconds} seconds...'
             )
             sleep(self._restart_seconds)
             if self._restart_seconds < self._MAX_RESTART_SECONDS:
                 self._restart_seconds += 5
-            self.connect(host, port)
+            self.connect()
         else:
-            logger.info(f'Successfully connected to broker at {host}:{port}')
+            self._restart_seconds = self._INITIAL_RESTART_SECONDS
+            logger.info(f'Successfully connected to broker at {self.host}:{self.port}')
 
     def on_connect(self, client_data, userdata, flags, rc):
         if rc != 0:
+            logger.error(f'Error to connect to mosquitto broker with error {rc} at {self.host}:{self.port}')
             self.paho_mqtt_client.reconnect()
         else:
             for topic in self.topics.keys():
                 self.paho_mqtt_client.subscribe(topic)
+                logger.info(f'Subscribe to topic {topic}')
+
+    def on_disconnect(self, client_data, userdata, flags):
+        logger.error(f'Mosquitto broker disconnected from {self.host}:{self.port}')
+        self.connect()
 
     def on_message(self, client_data, userdata, message):
         logger.info(f'New message to {message.topic} - {message.payload}')

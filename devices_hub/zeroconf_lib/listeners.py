@@ -23,6 +23,10 @@ class DeviceInfo:
         return self.service_info.__str__()
 
     @property
+    def name(self):
+        return self.service_info.name
+
+    @property
     def device_id(self) -> Optional[str]:
         try:
             device_id = self.service_info.properties[b'id']
@@ -46,26 +50,34 @@ class DeviceInfo:
 
 
 class SonoffDeviceListener(ServiceListener):
-    devices: Dict[str, DeviceInfo] = {}
+    _devices: Dict[str, DeviceInfo] = {}
 
     def update_service(self, zc: Zeroconf, type_: str, name: str):
+        logger.info(f'Service {name} updated {self.get_info(zc, type_, name)}')
         self.add_update_device(zc, type_, name)
 
     def remove_service(self, zc: Zeroconf, type_: str, name: str):
-        info = self.get_info(zc, type_, name)
-        device_id = info.device_id
-        try:
-            del self.devices[device_id]
-        except KeyError:
-            raise ZeroconfError(f'Device {device_id} cannot find in {self.devices}')
+        logger.info(f'Service {name} removed')
+        for device_id, device_info in self._devices.items():
+            if device_info.name == name:
+                del self._devices[device_id]
+                break
 
     def add_service(self, zc: Zeroconf, type_: str, name: str):
+        logger.info(f'Service {name} added {self.get_info(zc, type_, name)}')
         self.add_update_device(zc, type_, name)
 
     def add_update_device(self, zc: Zeroconf, type_: str, name: str):
         info = self.get_info(zc, type_, name)
         device_id = info.device_id
-        self.devices[device_id] = info
+        self._devices[device_id] = info
 
     def get_info(self, zc: Zeroconf, type_: str, name: str) -> DeviceInfo:
         return DeviceInfo(zc.get_service_info(type_, name))
+
+    @classmethod
+    def get_device(cls, device_id) -> Optional[DeviceInfo]:
+        try:
+            return cls._devices[device_id]
+        except KeyError:
+            return None

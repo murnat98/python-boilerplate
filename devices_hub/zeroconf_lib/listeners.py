@@ -1,8 +1,10 @@
+import json
 from dataclasses import dataclass
 from typing import Optional, Dict
 
 from zeroconf import ServiceListener, Zeroconf, ServiceInfo
 
+from devices_hub.consts import SwitcherEnum
 from devices_hub.logger import get_logger
 from devices_hub.zeroconf_lib.errors import ZeroconfError
 
@@ -21,6 +23,18 @@ class DeviceInfo:
 
     def __str__(self) -> str:
         return self.service_info.__str__()
+
+    @property
+    def switch(self) -> SwitcherEnum:
+        try:
+            data = self.service_info.properties[b'data1']
+        except KeyError:
+            raise ZeroconfError(f'cannot find data1 in properties of service {self.service_info}')
+        data = json.loads(data.decode('utf-8'))
+        try:
+            return SwitcherEnum(data['switch'])
+        except KeyError:
+            raise ZeroconfError(f'cannot find switch in data of service {self.service_info}')
 
     @property
     def name(self):

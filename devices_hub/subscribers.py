@@ -5,6 +5,7 @@ import requests
 from requests import exceptions
 from urllib3.exceptions import RequestError
 
+from devices_hub.consts import SwitcherEnum
 from devices_hub.logger import get_logger
 from devices_hub.mqtt.subscribers import JsonSubscriber
 from devices_hub.schemas import sonoff_control_schema
@@ -35,7 +36,14 @@ class SonoffControlSubscriber(JsonSubscriber):
             logger.error(f'Device {device_id} not found')
             return
 
+        switch = SwitcherEnum(self.message['switch'])
+        if switch == SwitcherEnum.toggle:
+            if device_info.switch == SwitcherEnum.on:
+                switch = SwitcherEnum.off
+            elif device_info.switch == SwitcherEnum.off:
+                switch = SwitcherEnum.on
+
         address = device_info.device_address
-        data = {'device_id': device_id, 'data': {'switch': self.message['switch']}}
+        data = {'device_id': device_id, 'data': {'switch': switch.value}}
         sonoff_switch_thread = Thread(target=self._switch_sonoff, args=(address, data))
         sonoff_switch_thread.start()

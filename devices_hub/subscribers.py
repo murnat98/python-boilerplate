@@ -14,7 +14,7 @@ from devices_hub.zeroconf_lib.listeners import Address, SonoffDeviceListener
 logger = get_logger(__name__)
 
 
-class SonoffControlSubscriber(JsonSubscriber):
+class SonoffSwitchSubscriber(JsonSubscriber):
     schema = sonoff_control_schema
 
     def _switch_sonoff(self, address: Address, data):

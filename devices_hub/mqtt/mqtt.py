@@ -14,7 +14,7 @@ class MQTT:
     _INITIAL_RESTART_SECONDS = 5
     _MAX_RESTART_SECONDS = 60
 
-    def __init__(self, host: str, port: int, topics: List[Topic]):
+    def __init__(self, host: str, port: int, username: str, password: str, topics: List[Topic]):
         self._restart_seconds = self._INITIAL_RESTART_SECONDS
         self.host = host
         self.port = port
@@ -22,6 +22,7 @@ class MQTT:
         self.topics = {topic.topic: topic.subscriber for topic in topics}
 
         self.paho_mqtt_client = client.Client()
+        self.paho_mqtt_client.username_pw_set(username, password)
         self.paho_mqtt_client.on_message = self.on_message
         self.paho_mqtt_client.on_connect = self.on_connect
         self.paho_mqtt_client.on_disconnect = self.on_disconnect
@@ -66,6 +67,9 @@ class MQTT:
             subscriber.subscribe(message.payload)
         except ValidationError:
             logger.error(f'Message incorrect format: {message.payload}')
+
+    def publish(self, topic, payload):
+        self.paho_mqtt_client.publish(topic, payload)
 
     def loop(self):
         self.paho_mqtt_client.loop_forever()

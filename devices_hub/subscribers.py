@@ -8,13 +8,13 @@ from urllib3.exceptions import RequestError
 from devices_hub.consts import SwitcherEnum
 from devices_hub.logger import get_logger
 from devices_hub.mqtt.subscribers import JsonSubscriber
-from devices_hub.schemas import sonoff_control_schema, tasmota_switch_schema
+from devices_hub.schemas import sonoff_control_schema
 from devices_hub.zeroconf_lib.listeners import Address, SonoffDeviceListener
 
 logger = get_logger(__name__)
 
 
-class SonoffSwitchSubscriber(JsonSubscriber):
+class SonoffControlSubscriber(JsonSubscriber):
     schema = sonoff_control_schema
 
     def _switch_sonoff(self, address: Address, data):
@@ -47,18 +47,3 @@ class SonoffSwitchSubscriber(JsonSubscriber):
         data = {'device_id': device_id, 'data': {'switch': switch.value}}
         sonoff_switch_thread = Thread(target=self._switch_sonoff, args=(address, data))
         sonoff_switch_thread.start()
-
-
-class TasmotaSwitchSubscriber(JsonSubscriber):
-    schema = tasmota_switch_schema
-
-    def handle(self):
-        switch = SwitcherEnum(self.message['switch'])
-        tasmota_parameters = {
-            SwitcherEnum.on: 1,
-            SwitcherEnum.off: 0,
-            SwitcherEnum.toggle: 2,
-        }
-        from devices_hub.mqtt_connection import mqtt_connection
-
-        mqtt_connection.publish(f'cmnd/{self.message["client"]}/LedPower', tasmota_parameters[switch])
